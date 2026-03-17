@@ -66,8 +66,8 @@ export default function Homepage() {
         }
 
         .logo-img {
-          width: 350px;
-          max-width: 85vw;
+          width: 260px;
+          max-width: 65vw;
           height: auto;
           filter: invert(1) brightness(10);
         }

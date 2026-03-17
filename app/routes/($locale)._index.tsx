@@ -1,167 +1,132 @@
-import {Await, useLoaderData, Link} from 'react-router';
-import type {Route} from './+types/_index';
-import {Suspense} from 'react';
-import {Image} from '@shopify/hydrogen';
-import type {
-  FeaturedCollectionFragment,
-  RecommendedProductsQuery,
-} from 'storefrontapi.generated';
-import {ProductItem} from '~/components/ProductItem';
+import { useState } from 'react';
+import type { Route } from './+types/_index';
+import logo from '~/assets/logo.png';
 
 export const meta: Route.MetaFunction = () => {
-  return [{title: 'Hydrogen | Home'}];
+  return [{ title: '440Hz | Intro' }];
 };
 
-export async function loader(args: Route.LoaderArgs) {
-  // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
-
-  // Await the critical data required to render initial state of the page
-  const criticalData = await loadCriticalData(args);
-
-  return {...deferredData, ...criticalData};
-}
-
-/**
- * Load data necessary for rendering content above the fold. This is the critical data
- * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
- */
-async function loadCriticalData({context}: Route.LoaderArgs) {
-  const [{collections}] = await Promise.all([
-    context.storefront.query(FEATURED_COLLECTION_QUERY),
-    // Add other queries here, so that they are loaded in parallel
-  ]);
-
-  return {
-    featuredCollection: collections.nodes[0],
-  };
-}
-
-/**
- * Load data for rendering content below the fold. This data is deferred and will be
- * fetched after the initial page load. If it's unavailable, the page should still 200.
- * Make sure to not throw any errors here, as it will cause the page to 500.
- */
-function loadDeferredData({context}: Route.LoaderArgs) {
-  const recommendedProducts = context.storefront
-    .query(RECOMMENDED_PRODUCTS_QUERY)
-    .catch((error: Error) => {
-      // Log query errors, but don't throw them so the page can still render
-      console.error(error);
-      return null;
-    });
-
-  return {
-    recommendedProducts,
-  };
+export async function loader() {
+  return null;
 }
 
 export default function Homepage() {
-  const data = useLoaderData<typeof loader>();
-  return (
-    <div className="home">
-      <FeaturedCollection collection={data.featuredCollection} />
-      <RecommendedProducts products={data.recommendedProducts} />
-    </div>
-  );
-}
+  const [password, setPassword] = useState('');
 
-function FeaturedCollection({
-  collection,
-}: {
-  collection: FeaturedCollectionFragment;
-}) {
-  if (!collection) return null;
-  const image = collection?.image;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Password submitted:', password);
+    // You can add password verification logic here
+  };
+
   return (
-    <Link
-      className="featured-collection"
-      to={`/collections/${collection.handle}`}
-    >
-      {image && (
-        <div className="featured-collection-image">
-          <Image data={image} sizes="100vw" />
+    <div className="intro-container">
+      <div className="content-box">
+        <div className="logo-box">
+          <img src={logo} alt="440Hz Logo" className="logo-img" />
         </div>
-      )}
-      <h1>{collection.title}</h1>
-    </Link>
-  );
-}
 
-function RecommendedProducts({
-  products,
-}: {
-  products: Promise<RecommendedProductsQuery | null>;
-}) {
-  return (
-    <div className="recommended-products">
-      <h2>Recommended Products</h2>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Await resolve={products}>
-          {(response) => (
-            <div className="recommended-products-grid">
-              {response
-                ? response.products.nodes.map((product) => (
-                    <ProductItem key={product.id} product={product} />
-                  ))
-                : null}
-            </div>
-          )}
-        </Await>
-      </Suspense>
-      <br />
+        <form onSubmit={handleSubmit} className="password-form">
+          <input
+            type="password"
+            placeholder="ENTER PASSWORD"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="password-input"
+          />
+        </form>
+      </div>
+
+      <style>{`
+        .intro-container {
+          background-color: #000 !important;
+          height: 100vh;
+          width: 100vw;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 99999;
+        }
+
+        .content-box {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 60px;
+        }
+
+        .logo-box {
+          animation: logoFadeIn 2.5s ease-in-out forwards;
+        }
+
+        .logo-img {
+          width: 350px;
+          max-width: 85vw;
+          height: auto;
+          filter: invert(1) brightness(10);
+        }
+
+        .password-form {
+          opacity: 0;
+          animation: formFadeIn 2s ease-in-out 1.2s forwards;
+          width: 100%;
+          max-width: 300px;
+        }
+
+        .password-input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+          color: #fff;
+          padding: 15px 0;
+          font-size: 13px;
+          letter-spacing: 0.3rem;
+          text-align: center;
+          outline: none;
+          transition: all 0.5s ease;
+          font-family: inherit;
+        }
+
+        .password-input::placeholder {
+          color: rgba(255, 255, 255, 0.15);
+          letter-spacing: 0.3rem;
+          font-size: 11px;
+        }
+
+        .password-input:focus {
+          border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+          letter-spacing: 0.4rem;
+        }
+
+        @keyframes logoFadeIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.97);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes formFadeIn {
+          0% {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
-
-const FEATURED_COLLECTION_QUERY = `#graphql
-  fragment FeaturedCollection on Collection {
-    id
-    title
-    image {
-      id
-      url
-      altText
-      width
-      height
-    }
-    handle
-  }
-  query FeaturedCollection($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    collections(first: 1, sortKey: UPDATED_AT, reverse: true) {
-      nodes {
-        ...FeaturedCollection
-      }
-    }
-  }
-` as const;
-
-const RECOMMENDED_PRODUCTS_QUERY = `#graphql
-  fragment RecommendedProduct on Product {
-    id
-    title
-    handle
-    priceRange {
-      minVariantPrice {
-        amount
-        currencyCode
-      }
-    }
-    featuredImage {
-      id
-      url
-      altText
-      width
-      height
-    }
-  }
-  query RecommendedProducts ($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    products(first: 4, sortKey: UPDATED_AT, reverse: true) {
-      nodes {
-        ...RecommendedProduct
-      }
-    }
-  }
-` as const;
